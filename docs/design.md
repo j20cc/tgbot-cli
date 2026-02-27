@@ -42,6 +42,7 @@
 2. 周期调用 `getUpdates`
 3. 按 `update_id + 1` 推进 offset，避免重复消费
 4. `--interval` 控制轮询间隔周期
+5. `--format` 支持 `pretty`（默认）和 `jsonl` 输出
 
 ## 下一步
 

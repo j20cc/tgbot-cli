@@ -48,6 +48,7 @@ func runUpdates(args []string) {
 	offset := fs.Int64("offset", 0, "initial update offset")
 	once := fs.Bool("once", false, "run only one polling cycle")
 	deleteWebhook := fs.Bool("delete-webhook", true, "delete webhook before polling")
+	outputFormat := fs.String("format", "pretty", "updates output format: pretty|jsonl")
 	tokenOpt := registerTokenFlags(fs)
 
 	_ = fs.Parse(args[1:])
@@ -58,6 +59,7 @@ func runUpdates(args []string) {
 		InitialOffset: *offset,
 		DeleteWebhook: *deleteWebhook,
 		Once:          *once,
+		OutputFormat:  *outputFormat,
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -167,7 +169,7 @@ Usage:
   tgbot message send --chat-id <id> --text <text> [flags]
 
 Example:
-  tgbot updates listen --interval 3s --timeout 20
+  tgbot updates listen --interval 3s --timeout 20 --format pretty
   tgbot bot me
   tgbot message send --chat-id 12345 --text "hello"
 

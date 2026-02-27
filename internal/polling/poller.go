@@ -2,6 +2,7 @@ package polling
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"time"
@@ -20,6 +21,7 @@ type Options struct {
 	InitialOffset int64
 	DeleteWebhook bool
 	Once          bool
+	OutputFormat  string
 }
 
 type Poller struct {
@@ -33,6 +35,9 @@ func New(api telegramAPI, opts Options) *Poller {
 	}
 	if opts.TimeoutSecond < 0 {
 		opts.TimeoutSecond = 0
+	}
+	if opts.OutputFormat == "" {
+		opts.OutputFormat = "pretty"
 	}
 	return &Poller{api: api, opts: opts}
 }
@@ -55,7 +60,11 @@ func (p *Poller) Run(ctx context.Context, outWriter, errWriter io.Writer) error 
 		}
 
 		for _, update := range updates {
-			if _, err := outWriter.Write(append(update.Raw, '\n')); err != nil {
+			formatted, err := formatUpdate(update.Raw, p.opts.OutputFormat)
+			if err != nil {
+				return err
+			}
+			if _, err := outWriter.Write(formatted); err != nil {
 				return err
 			}
 			if update.UpdateID >= offset {
@@ -74,5 +83,24 @@ func (p *Poller) Run(ctx context.Context, outWriter, errWriter io.Writer) error 
 			case <-time.After(p.opts.Interval):
 			}
 		}
+	}
+}
+
+func formatUpdate(raw []byte, outputFormat string) ([]byte, error) {
+	switch outputFormat {
+	case "jsonl":
+		return append(raw, '\n'), nil
+	case "pretty":
+		fallthrough
+	default:
+		var out any
+		if err := json.Unmarshal(raw, &out); err != nil {
+			return nil, fmt.Errorf("decode update json: %w", err)
+		}
+		pretty, err := json.MarshalIndent(out, "", "  ")
+		if err != nil {
+			return nil, fmt.Errorf("format update json: %w", err)
+		}
+		return append(pretty, []byte("\n\n")...), nil
 	}
 }
