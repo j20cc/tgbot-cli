@@ -45,6 +45,7 @@ Config file supports either:
 
 ```bash
 ./tgbot-cli updates listen --interval 3s --timeout 20 --format pretty
+./tgbot-cli updates listen --interval 3s --timeout 20
 ```
 
 Useful flags:
