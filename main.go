@@ -39,9 +39,21 @@ func main() {
 }
 
 func runUpdates(args []string) {
-	if len(args) == 0 || args[0] != "listen" {
-		fatal("usage: tgbot updates listen [flags]")
+	if len(args) == 0 {
+		fatal("usage: tgbot updates <listen|list> [flags]")
 	}
+
+	switch args[0] {
+	case "listen":
+		runUpdatesListen(args[1:])
+	case "list":
+		runUpdatesList(args[1:])
+	default:
+		fatal("usage: tgbot updates <listen|list> [flags]")
+	}
+}
+
+func runUpdatesListen(args []string) {
 	fs := baseFlagSet("updates listen")
 	interval := fs.Duration("interval", 2*time.Second, "polling interval between requests")
 	timeout := fs.Int("timeout", 20, "getUpdates long-poll timeout in seconds")
@@ -51,7 +63,7 @@ func runUpdates(args []string) {
 	outputFormat := fs.String("format", "pretty", "updates output format: pretty|jsonl")
 	tokenOpt := registerTokenFlags(fs)
 
-	_ = fs.Parse(args[1:])
+	_ = fs.Parse(args)
 	client := mustClient(tokenOpt)
 	poller := polling.New(client, polling.Options{
 		Interval:      *interval,
@@ -70,6 +82,62 @@ func runUpdates(args []string) {
 			return
 		}
 		fatalf("polling failed: %v", err)
+	}
+}
+
+func runUpdatesList(args []string) {
+	fs := baseFlagSet("updates list")
+	limit := fs.Int("limit", 10, "max number of latest updates to print")
+	timeout := fs.Int("timeout", 0, "getUpdates timeout in seconds (default 0 for one-shot)")
+	offset := fs.Int64("offset", 0, "initial update offset")
+	deleteWebhook := fs.Bool("delete-webhook", true, "delete webhook before listing")
+	outputFormat := fs.String("format", "pretty", "updates output format: pretty|jsonl")
+	tokenOpt := registerTokenFlags(fs)
+
+	_ = fs.Parse(args)
+	if *limit <= 0 {
+		fatal("--limit must be greater than 0")
+	}
+
+	ctx := context.Background()
+	client := mustClient(tokenOpt)
+	if *deleteWebhook {
+		fmt.Fprintln(os.Stderr, "[info] deleting webhook before listing...")
+		if err := client.DeleteWebhook(ctx); err != nil {
+			fatalf("delete webhook failed: %v", err)
+		}
+	}
+
+	recent := make([]telegram.Update, 0, *limit)
+	currentOffset := *offset
+	for {
+		updates, err := client.GetUpdatesWithLimit(ctx, currentOffset, *timeout, 100)
+		if err != nil {
+			fatalf("updates list failed: %v", err)
+		}
+		if len(updates) == 0 {
+			break
+		}
+
+		for _, update := range updates {
+			recent = append(recent, update)
+			if len(recent) > *limit {
+				recent = recent[len(recent)-*limit:]
+			}
+			if update.UpdateID >= currentOffset {
+				currentOffset = update.UpdateID + 1
+			}
+		}
+	}
+
+	for _, update := range recent {
+		formatted, err := polling.FormatUpdate(update.Raw, *outputFormat)
+		if err != nil {
+			fatalf("format update failed: %v", err)
+		}
+		if _, err := os.Stdout.Write(formatted); err != nil {
+			fatalf("write output failed: %v", err)
+		}
 	}
 }
 
@@ -165,11 +233,13 @@ func printUsage() {
 
 Usage:
   tgbot updates listen [flags]
+  tgbot updates list [flags]
   tgbot bot me [flags]
   tgbot message send --chat-id <id> --text <text> [flags]
 
 Example:
   tgbot updates listen --interval 3s --timeout 20 --format pretty
+  tgbot updates list --limit 20 --format pretty
   tgbot bot me
   tgbot message send --chat-id 12345 --text "hello"
 

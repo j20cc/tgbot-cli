@@ -30,9 +30,9 @@ func (f *fakeAPI) GetUpdates(_ context.Context, _ int64, _ int) ([]telegram.Upda
 }
 
 func TestFormatUpdatePretty(t *testing.T) {
-	out, err := formatUpdate([]byte(`{"update_id":1,"message":{"text":"hi"}}`), "pretty")
+	out, err := FormatUpdate([]byte(`{"update_id":1,"message":{"text":"hi"}}`), "pretty")
 	if err != nil {
-		t.Fatalf("formatUpdate returned error: %v", err)
+		t.Fatalf("FormatUpdate returned error: %v", err)
 	}
 	s := string(out)
 	if !strings.Contains(s, "\n  \"update_id\": 1") {
@@ -41,9 +41,9 @@ func TestFormatUpdatePretty(t *testing.T) {
 }
 
 func TestFormatUpdateJSONL(t *testing.T) {
-	out, err := formatUpdate([]byte(`{"update_id":1}`), "jsonl")
+	out, err := FormatUpdate([]byte(`{"update_id":1}`), "jsonl")
 	if err != nil {
-		t.Fatalf("formatUpdate returned error: %v", err)
+		t.Fatalf("FormatUpdate returned error: %v", err)
 	}
 	if string(out) != "{\"update_id\":1}\n" {
 		t.Fatalf("unexpected jsonl output: %q", string(out))

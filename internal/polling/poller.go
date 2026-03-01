@@ -60,7 +60,7 @@ func (p *Poller) Run(ctx context.Context, outWriter, errWriter io.Writer) error 
 		}
 
 		for _, update := range updates {
-			formatted, err := formatUpdate(update.Raw, p.opts.OutputFormat)
+			formatted, err := FormatUpdate(update.Raw, p.opts.OutputFormat)
 			if err != nil {
 				return err
 			}
@@ -86,7 +86,7 @@ func (p *Poller) Run(ctx context.Context, outWriter, errWriter io.Writer) error 
 	}
 }
 
-func formatUpdate(raw []byte, outputFormat string) ([]byte, error) {
+func FormatUpdate(raw []byte, outputFormat string) ([]byte, error) {
 	switch outputFormat {
 	case "jsonl":
 		return append(raw, '\n'), nil

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added `tgbot updates list` for one-shot retrieval of latest N updates via `--limit`.
+- Added `GetUpdatesWithLimit` in Telegram client to support bounded `getUpdates` requests.
+
 ## v0.1.0
 
 First runnable version for trial:

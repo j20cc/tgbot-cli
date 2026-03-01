@@ -33,6 +33,7 @@
 - `tgbot updates listen --interval 3s --timeout 20`
 - `tgbot bot me`
 - `tgbot message send --chat-id ... --text ...`
+- `tgbot updates list --limit 20`（一次性拉取最近 N 条 update）
 
 ## 本地接收用户消息方案
 

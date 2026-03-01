@@ -14,7 +14,8 @@ go build .
 
 ## Commands
 
-- `tgbot updates listen` - poll updates and print JSON (pretty by default)
+- `tgbot updates listen` - continuous polling and streaming output
+- `tgbot updates list` - one-shot fetch and print latest N updates
 - `tgbot bot me` - show current bot profile
 - `tgbot message send` - send a text message
 
@@ -44,7 +45,6 @@ Config file supports either:
 
 ```bash
 ./tgbot-cli updates listen --interval 3s --timeout 20 --format pretty
-=======
 ./tgbot-cli updates listen --interval 3s --timeout 20
 ```
 
@@ -55,6 +55,20 @@ Useful flags:
 - `--offset`: initial update offset
 - `--once`: run a single polling round and exit
 - `--delete-webhook`: delete webhook before polling (default `true`)
+- `--format`: output format, `pretty` (default) or `jsonl`
+
+## List latest updates once
+
+```bash
+./tgbot-cli updates list --limit 20 --format pretty
+```
+
+Useful flags:
+
+- `--limit`: number of latest updates to keep and print
+- `--offset`: starting offset if you want to continue from a known update id
+- `--delete-webhook`: delete webhook before listing (default `true`)
+- `--timeout`: getUpdates timeout in seconds (default `0` for snapshot)
 - `--format`: output format, `pretty` (default) or `jsonl`
 
 ## Get bot identity

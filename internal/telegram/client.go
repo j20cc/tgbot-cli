@@ -81,6 +81,10 @@ func (c *Client) DeleteWebhook(ctx context.Context) error {
 }
 
 func (c *Client) GetUpdates(ctx context.Context, offset int64, timeoutSec int) ([]Update, error) {
+	return c.GetUpdatesWithLimit(ctx, offset, timeoutSec, 0)
+}
+
+func (c *Client) GetUpdatesWithLimit(ctx context.Context, offset int64, timeoutSec int, limit int) ([]Update, error) {
 	endpoint, err := c.buildURL("getUpdates")
 	if err != nil {
 		return nil, err
@@ -95,6 +99,9 @@ func (c *Client) GetUpdates(ctx context.Context, offset int64, timeoutSec int) (
 		q.Set("offset", strconv.FormatInt(offset, 10))
 	}
 	q.Set("timeout", strconv.Itoa(timeoutSec))
+	if limit > 0 {
+		q.Set("limit", strconv.Itoa(limit))
+	}
 	u.RawQuery = q.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
